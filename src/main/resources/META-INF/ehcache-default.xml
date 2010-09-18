@@ -1,0 +1,17 @@
+<ehcache xsi:noNamespaceSchemaLocation="ehcache.xsd" updateCheck="true" monitoring="autodetect">
+
+    <!-- default cache lasts 10 mins -->
+	<defaultCache
+            maxElementsInMemory="10000"
+            eternal="false"
+            timeToIdleSeconds="0"
+            timeToLiveSeconds="600"
+            overflowToDisk="false"
+            diskSpoolBufferSizeMB="30"
+            maxElementsOnDisk="0"
+            diskPersistent="false"
+            diskExpiryThreadIntervalSeconds="0"
+            memoryStoreEvictionPolicy="LRU"
+     />
+
+</ehcache>
