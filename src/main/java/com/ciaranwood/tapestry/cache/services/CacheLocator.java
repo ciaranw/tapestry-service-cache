@@ -35,5 +35,21 @@ public class CacheLocator {
         result = 31 * result + (keyParameterValue != null ? keyParameterValue.hashCode() : 0);
         return result;
     }
+
+    @Override
+    public String toString() {
+        StringBuilder builder = new StringBuilder();
+        builder.append("CacheLocator{");
+        builder.append(methodName);
+        builder.append("(");
+
+        if(keyParameterValue != null) {
+            builder.append(keyParameterValue);
+        }
+
+        builder.append(")}");
+
+        return builder.toString();
+    }
 }
 

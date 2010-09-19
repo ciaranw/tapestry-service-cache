@@ -24,13 +24,14 @@ public class CacheMethodAdvice implements MethodAdvice {
         CacheLocator key = getKeyForInvocation(invocation);
         Element cached = cache.get(key);
         if(cached == null) {
+            log.debug("cache miss for {} using cache {}", key, cache.getName());
             invocation.proceed();
             Object result = invocation.getResult();
             cache.put(new Element(key, result));
-            log.debug("cached result of {}() using cache {}", key, cache.getName());
+            log.debug("cached result of {} using cache {}", key, cache.getName());
         } else {
             invocation.overrideResult(cached.getValue());
-            log.debug("hit cache for {}() using cache {}", key, cache.getName());
+            log.debug("cache hit for {} using cache {}", key, cache.getName());
         }
     }
 
