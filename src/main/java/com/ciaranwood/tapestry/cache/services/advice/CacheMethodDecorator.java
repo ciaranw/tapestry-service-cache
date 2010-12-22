@@ -1,8 +1,8 @@
 package com.ciaranwood.tapestry.cache.services.advice;
 
-import org.slf4j.Logger;
+import org.apache.tapestry5.ioc.ServiceResources;
 
 public interface CacheMethodDecorator {
 
-    <T> T build(Class<T> serviceInterface, T delegate, String serviceId, Logger log);
+    <T> T build(Class<T> serviceInterface, T delegate, ServiceResources resources);
 }
