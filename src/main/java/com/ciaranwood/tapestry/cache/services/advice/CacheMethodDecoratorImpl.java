@@ -3,8 +3,11 @@ package com.ciaranwood.tapestry.cache.services.advice;
 import com.ciaranwood.tapestry.cache.services.CacheFactory;
 import com.ciaranwood.tapestry.cache.services.annotations.CacheKey;
 import com.ciaranwood.tapestry.cache.services.annotations.CacheResult;
+import org.apache.tapestry5.ioc.Location;
+import org.apache.tapestry5.ioc.ServiceResources;
 import org.apache.tapestry5.ioc.services.AspectDecorator;
 import org.apache.tapestry5.ioc.services.AspectInterceptorBuilder;
+import org.apache.tapestry5.ioc.services.ClassFactory;
 import org.slf4j.Logger;
 
 import java.lang.annotation.Annotation;
@@ -20,37 +23,41 @@ public class CacheMethodDecoratorImpl implements CacheMethodDecorator {
         this.cacheFactory = cacheFactory;
     }
 
-    public <T> T build(Class<T> serviceInterface, T delegate, String serviceId, Logger log) {
+    public <T> T build(Class<T> serviceInterface, T delegate, ServiceResources resources) {
+
+        String serviceId = resources.getServiceId();
+        Logger log = resources.getLogger();
+        Class<?> implementation = resources.getImplementationClass();
 
         AspectInterceptorBuilder<T> builder = decorator.createBuilder(serviceInterface, delegate,
                 String.format("<Cache interceptor for %s(%s)", serviceId, serviceInterface.getName()));
 
-        for(Method method : delegate.getClass().getDeclaredMethods()) {
+        for(Method method : implementation.getDeclaredMethods()) {
 
             CacheResult annotation = method.getAnnotation(CacheResult.class);
 
             if(annotation != null) {
-                checkInterfaceDefinesMethod(method, serviceInterface);
-                String cacheName = determineCacheName(annotation, serviceId);
-                int cacheKeyIndex = getCacheKeyParameterIndex(method);
+                try {
+                    Method interfaceMethod = serviceInterface.getMethod(method.getName(), method.getParameterTypes());
 
-                checkForIncorrectParameterCount(method);
-                validateCacheKeyAnnotation(method, cacheKeyIndex);
+                    String cacheName = determineCacheName(annotation, serviceId);
+                    int cacheKeyIndex = getCacheKeyParameterIndex(method);
 
-                Method toAdvise = InterfaceMethodMatcher.findInterfaceMethod(method, serviceInterface);
-                builder.adviseMethod(toAdvise, new CacheMethodAdvice(cacheName, cacheKeyIndex, cacheFactory, log));
+                    checkForIncorrectParameterCount(method);
+                    validateCacheKeyAnnotation(method, cacheKeyIndex);
+
+                    builder.adviseMethod(interfaceMethod, new CacheMethodAdvice(cacheName, cacheKeyIndex, cacheFactory, log));
+                } catch(NoSuchMethodException e) {
+                    throw new RuntimeException(String.format("A @CacheResult annotation is present on %s.%s(). " +
+                            "Please remove this annotation as caching is not supported on " +
+                            "methods that are not declared by service interfaces.",
+                            method.getDeclaringClass().getName(), method.getName()));
+                }
+
             }
         }
 
         return builder.build();
-    }
-
-    private void checkInterfaceDefinesMethod(Method method, Class<?> serviceInterface) {
-        if(!InterfaceMethodMatcher.implementsInterfaceMethod(method, serviceInterface)) {
-            throw new RuntimeException(String.format("A @CacheResult annotation is present on %s.%s(). " +
-                    "Please remove this annotation as caching is not supported on " +
-                    "methods that are not declared by service interfaces.", method.getDeclaringClass().getName(), method.getName()));
-        }
     }
 
     private void checkForIncorrectParameterCount(Method method) {
