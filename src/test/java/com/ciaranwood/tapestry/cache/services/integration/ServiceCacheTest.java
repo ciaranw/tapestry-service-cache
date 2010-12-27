@@ -27,7 +27,7 @@ public class ServiceCacheTest {
         RegistryBuilder builder = new RegistryBuilder();
         builder.add(ServiceCacheModule.class, TestModule.class);
         registry = builder.build();
-        
+        registry.performRegistryStartup();
     }
 
     @Test

@@ -2,6 +2,7 @@ package com.ciaranwood.tapestry.cache.services.advice;
 
 import com.ciaranwood.tapestry.cache.services.CacheFactory;
 import com.ciaranwood.tapestry.cache.services.CacheLocator;
+import net.sf.ehcache.Cache;
 import net.sf.ehcache.Ehcache;
 import net.sf.ehcache.Element;
 import org.apache.tapestry5.ioc.Invocation;

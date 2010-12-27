@@ -1,9 +1,11 @@
 package com.ciaranwood.tapestry.cache.services.advice;
 
 import com.ciaranwood.tapestry.cache.services.CacheFactory;
+import com.ciaranwood.tapestry.cache.services.CacheWriterClassFactory;
 import com.ciaranwood.tapestry.cache.services.annotations.CacheKey;
 import com.ciaranwood.tapestry.cache.services.annotations.CacheResult;
-import org.apache.tapestry5.ioc.Location;
+import com.ciaranwood.tapestry.cache.services.annotations.WriteThrough;
+import net.sf.ehcache.Ehcache;
 import org.apache.tapestry5.ioc.ServiceResources;
 import org.apache.tapestry5.ioc.services.AspectDecorator;
 import org.apache.tapestry5.ioc.services.AspectInterceptorBuilder;
@@ -17,10 +19,12 @@ public class CacheMethodDecoratorImpl implements CacheMethodDecorator {
 
     private final AspectDecorator decorator;
     private final CacheFactory cacheFactory;
+    private final CacheWriterClassFactory classFactory;
 
-    public CacheMethodDecoratorImpl(AspectDecorator decorator, CacheFactory cacheFactory) {
+    public CacheMethodDecoratorImpl(AspectDecorator decorator, CacheFactory cacheFactory, CacheWriterClassFactory classFactory) {
         this.decorator = decorator;
         this.cacheFactory = cacheFactory;
+        this.classFactory = classFactory;
     }
 
     public <T> T build(Class<T> serviceInterface, T delegate, ServiceResources resources) {
@@ -34,13 +38,13 @@ public class CacheMethodDecoratorImpl implements CacheMethodDecorator {
 
         for(Method method : implementation.getDeclaredMethods()) {
 
-            CacheResult annotation = method.getAnnotation(CacheResult.class);
+            CacheResult cacheResult = method.getAnnotation(CacheResult.class);
 
-            if(annotation != null) {
+            if(cacheResult != null) {
                 try {
                     Method interfaceMethod = serviceInterface.getMethod(method.getName(), method.getParameterTypes());
 
-                    String cacheName = determineCacheName(annotation, serviceId);
+                    String cacheName = determineCacheName(cacheResult, serviceId);
                     int cacheKeyIndex = getCacheKeyParameterIndex(method);
 
                     checkForIncorrectParameterCount(method);
@@ -55,9 +59,33 @@ public class CacheMethodDecoratorImpl implements CacheMethodDecorator {
                 }
 
             }
+
+            WriteThrough writeThrough = method.getAnnotation(WriteThrough.class);
+
+            if(writeThrough != null) {
+                try {
+                    int cacheKeyIndex = getCacheKeyParameterIndex(method);
+                    Method toAdvise = serviceInterface.getMethod(method.getName(), method.getParameterTypes());
+                    Ehcache cache = getWriteCache(serviceId);
+                    classFactory.add(cache, serviceInterface, delegate, toAdvise);
+                    builder.adviseMethod(toAdvise, new WriteThroughAdvice(cache, cacheKeyIndex, log));
+                } catch(NoSuchMethodException e) {
+                    throw new RuntimeException(String.format("A @WriteThrough annotation is present on %s.%s(). " +
+                            "Please remove this annotation as caching is not supported on " +
+                            "methods that are not declared by service interfaces.",
+                            method.getDeclaringClass().getName(), method.getName()));
+                }
+            }
         }
 
         return builder.build();
+    }
+
+    private Ehcache getWriteCache(String serviceId) {
+        Ehcache defaultWriteCache = cacheFactory.getCache("defaultWrite");
+        Ehcache cache = cacheFactory.getCache(serviceId);
+        cache.getCacheConfiguration().addCacheWriter(defaultWriteCache.getCacheConfiguration().getCacheWriterConfiguration());
+        return cache;
     }
 
     private void checkForIncorrectParameterCount(Method method) {
