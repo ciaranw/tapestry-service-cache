@@ -1,7 +1,7 @@
 <ehcache xsi:noNamespaceSchemaLocation="ehcache.xsd" updateCheck="true" monitoring="autodetect">
 
     <!-- default cache lasts 10 mins -->
-	<defaultCache
+    <defaultCache
             maxElementsInMemory="10000"
             eternal="false"
             timeToIdleSeconds="0"
@@ -12,6 +12,11 @@
             diskPersistent="false"
             diskExpiryThreadIntervalSeconds="0"
             memoryStoreEvictionPolicy="LRU"
-     />
+            />
 
+    <cache name="defaultWrite" eternal="false" maxElementsInMemory="1000" overflowToDisk="false">
+        <cacheWriter>
+            <cacheWriterFactory class="com.ciaranwood.tapestry.cache.services.impl.FabricatedCacheWriterFactory"/>
+        </cacheWriter>  
+    </cache>
 </ehcache>

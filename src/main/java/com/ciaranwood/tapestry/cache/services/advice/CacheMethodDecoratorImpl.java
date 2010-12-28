@@ -1,10 +1,15 @@
 package com.ciaranwood.tapestry.cache.services.advice;
 
 import com.ciaranwood.tapestry.cache.services.CacheFactory;
+import com.ciaranwood.tapestry.cache.services.CacheWriterClassFactory;
 import com.ciaranwood.tapestry.cache.services.annotations.CacheKey;
 import com.ciaranwood.tapestry.cache.services.annotations.CacheResult;
+import com.ciaranwood.tapestry.cache.services.annotations.WriteThrough;
+import net.sf.ehcache.Ehcache;
+import org.apache.tapestry5.ioc.ServiceResources;
 import org.apache.tapestry5.ioc.services.AspectDecorator;
 import org.apache.tapestry5.ioc.services.AspectInterceptorBuilder;
+import org.apache.tapestry5.ioc.services.ClassFactory;
 import org.slf4j.Logger;
 
 import java.lang.annotation.Annotation;
@@ -14,43 +19,73 @@ public class CacheMethodDecoratorImpl implements CacheMethodDecorator {
 
     private final AspectDecorator decorator;
     private final CacheFactory cacheFactory;
+    private final CacheWriterClassFactory classFactory;
 
-    public CacheMethodDecoratorImpl(AspectDecorator decorator, CacheFactory cacheFactory) {
+    public CacheMethodDecoratorImpl(AspectDecorator decorator, CacheFactory cacheFactory, CacheWriterClassFactory classFactory) {
         this.decorator = decorator;
         this.cacheFactory = cacheFactory;
+        this.classFactory = classFactory;
     }
 
-    public <T> T build(Class<T> serviceInterface, T delegate, String serviceId, Logger log) {
+    public <T> T build(Class<T> serviceInterface, T delegate, ServiceResources resources) {
+
+        String serviceId = resources.getServiceId();
+        Logger log = resources.getLogger();
+        Class<?> implementation = resources.getImplementationClass();
 
         AspectInterceptorBuilder<T> builder = decorator.createBuilder(serviceInterface, delegate,
                 String.format("<Cache interceptor for %s(%s)", serviceId, serviceInterface.getName()));
 
-        for(Method method : delegate.getClass().getDeclaredMethods()) {
+        for(Method method : implementation.getDeclaredMethods()) {
 
-            CacheResult annotation = method.getAnnotation(CacheResult.class);
+            CacheResult cacheResult = method.getAnnotation(CacheResult.class);
 
-            if(annotation != null) {
-                checkInterfaceDefinesMethod(method, serviceInterface);
-                String cacheName = determineCacheName(annotation, serviceId);
-                int cacheKeyIndex = getCacheKeyParameterIndex(method);
+            if(cacheResult != null) {
+                try {
+                    Method interfaceMethod = serviceInterface.getMethod(method.getName(), method.getParameterTypes());
 
-                checkForIncorrectParameterCount(method);
-                validateCacheKeyAnnotation(method, cacheKeyIndex);
+                    String cacheName = determineCacheName(cacheResult, serviceId);
+                    int cacheKeyIndex = getCacheKeyParameterIndex(method);
 
-                Method toAdvise = InterfaceMethodMatcher.findInterfaceMethod(method, serviceInterface);
-                builder.adviseMethod(toAdvise, new CacheMethodAdvice(cacheName, cacheKeyIndex, cacheFactory, log));
+                    checkForIncorrectParameterCount(method);
+                    validateCacheKeyAnnotation(method, cacheKeyIndex);
+
+                    builder.adviseMethod(interfaceMethod, new CacheMethodAdvice(cacheName, cacheKeyIndex, cacheFactory, log));
+                } catch(NoSuchMethodException e) {
+                    throw new RuntimeException(String.format("A @CacheResult annotation is present on %s.%s(). " +
+                            "Please remove this annotation as caching is not supported on " +
+                            "methods that are not declared by service interfaces.",
+                            method.getDeclaringClass().getName(), method.getName()));
+                }
+
+            }
+
+            WriteThrough writeThrough = method.getAnnotation(WriteThrough.class);
+
+            if(writeThrough != null) {
+                try {
+                    int cacheKeyIndex = getCacheKeyParameterIndex(method);
+                    Method toAdvise = serviceInterface.getMethod(method.getName(), method.getParameterTypes());
+                    Ehcache cache = getWriteCache(serviceId);
+                    classFactory.add(cache, serviceInterface, delegate, toAdvise);
+                    builder.adviseMethod(toAdvise, new WriteThroughAdvice(cache, cacheKeyIndex, log));
+                } catch(NoSuchMethodException e) {
+                    throw new RuntimeException(String.format("A @WriteThrough annotation is present on %s.%s(). " +
+                            "Please remove this annotation as caching is not supported on " +
+                            "methods that are not declared by service interfaces.",
+                            method.getDeclaringClass().getName(), method.getName()));
+                }
             }
         }
 
         return builder.build();
     }
 
-    private void checkInterfaceDefinesMethod(Method method, Class<?> serviceInterface) {
-        if(!InterfaceMethodMatcher.implementsInterfaceMethod(method, serviceInterface)) {
-            throw new RuntimeException(String.format("A @CacheResult annotation is present on %s.%s(). " +
-                    "Please remove this annotation as caching is not supported on " +
-                    "methods that are not declared by service interfaces.", method.getDeclaringClass().getName(), method.getName()));
-        }
+    private Ehcache getWriteCache(String serviceId) {
+        Ehcache defaultWriteCache = cacheFactory.getCache("defaultWrite");
+        Ehcache cache = cacheFactory.getCache(serviceId);
+        cache.getCacheConfiguration().addCacheWriter(defaultWriteCache.getCacheConfiguration().getCacheWriterConfiguration());
+        return cache;
     }
 
     private void checkForIncorrectParameterCount(Method method) {
