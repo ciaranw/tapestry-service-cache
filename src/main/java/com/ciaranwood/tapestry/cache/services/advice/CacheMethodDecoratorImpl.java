@@ -33,6 +33,10 @@ public class CacheMethodDecoratorImpl implements CacheMethodDecorator {
         Logger log = resources.getLogger();
         Class<?> implementation = resources.getImplementationClass();
 
+        if(implementation == null) {
+            return delegate;
+        }
+
         AspectInterceptorBuilder<T> builder = decorator.createBuilder(serviceInterface, delegate,
                 String.format("<Cache interceptor for %s(%s)", serviceId, serviceInterface.getName()));
 
