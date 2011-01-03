@@ -1,12 +1,6 @@
 package com.ciaranwood.tapestry.cache.services.integration;
 
-import com.ciaranwood.tapestry.cache.services.AnotherTestService;
-import com.ciaranwood.tapestry.cache.services.InvalidCacheAnnotations;
-import com.ciaranwood.tapestry.cache.services.MissingCacheKey;
-import com.ciaranwood.tapestry.cache.services.NoInterface;
-import com.ciaranwood.tapestry.cache.services.ServiceCacheModule;
-import com.ciaranwood.tapestry.cache.services.TestModule;
-import com.ciaranwood.tapestry.cache.services.TestService;
+import com.ciaranwood.tapestry.cache.services.*;
 import org.apache.tapestry5.ioc.Registry;
 import org.apache.tapestry5.ioc.RegistryBuilder;
 import org.junit.After;
@@ -70,6 +64,15 @@ public class ServiceCacheTest {
         String result = noInterface.cannotCacheThis();
 
         assertNotSame(result, noInterface.cannotCacheThis());
+    }
+
+    @Test
+    public void cannotCacheWhenBuiltWithBuilderMethod() {
+        BuilderMethodBuiltService builderMethodBuilt = registry.getService(BuilderMethodBuiltService.class);
+
+        String result = builderMethodBuilt.get();
+
+        assertNotSame(result, builderMethodBuilt.get());
     }
 
     @Test
