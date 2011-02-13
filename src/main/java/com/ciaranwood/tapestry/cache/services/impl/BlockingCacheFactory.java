@@ -14,7 +14,7 @@ public class BlockingCacheFactory implements CacheFactory {
     private final int timeout;
 
     public BlockingCacheFactory(@Inject @Symbol(ServiceCacheConstants.EHCACHE_CONFIGURATION_FILE) String configFileUrl,
-                                @Symbol(ServiceCacheConstants.BLOCKING_CACHE_TIMEOUT) int timeout) {
+                                @Inject @Symbol(ServiceCacheConstants.BLOCKING_CACHE_TIMEOUT) int timeout) {
         this.cacheManager = new CacheManager(getClass().getResource(configFileUrl));
         this.timeout = timeout;
     }

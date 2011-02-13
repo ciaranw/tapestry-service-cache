@@ -5,20 +5,20 @@ import org.slf4j.Logger;
 import java.util.HashMap;
 import java.util.Map;
 
-public class StringStore {
+public class IntegerStore {
 
-    private Map<Integer, String> store = new HashMap<Integer, String>();
+    private Map<Integer, Integer> store = new HashMap<Integer, Integer>();
     private final Logger log;
 
-    public StringStore(Logger log) {
+    public IntegerStore(Logger log) {
         this.log = log;
     }
 
-    public String get(Integer id) {
+    public Integer get(Integer id) {
         return store.get(id);
     }
 
-    public void put(Integer id, String data) {
+    public void put(Integer id, Integer data) {
         log.debug("putting {} using id {}", data, id);
         store.put(id, data);
     }

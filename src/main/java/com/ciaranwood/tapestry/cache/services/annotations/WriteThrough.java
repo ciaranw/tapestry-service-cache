@@ -15,4 +15,12 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Retention(RUNTIME)
 @Documented
 public @interface WriteThrough {
+
+    String value() default "";
+
+    /**
+     * Use this parameter to explicitly set the name of the cache to use when writing through.
+     */
+    String cacheName() default "";
+    
 }

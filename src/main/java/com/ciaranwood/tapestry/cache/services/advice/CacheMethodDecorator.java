@@ -4,5 +4,5 @@ import org.apache.tapestry5.ioc.ServiceResources;
 
 public interface CacheMethodDecorator {
 
-    <T> T build(Class<T> serviceInterface, T delegate, ServiceResources resources);
+    <T> T build(T delegate, ServiceResources resources);
 }

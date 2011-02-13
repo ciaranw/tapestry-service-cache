@@ -4,21 +4,21 @@ import com.ciaranwood.tapestry.cache.services.annotations.CacheKey;
 import com.ciaranwood.tapestry.cache.services.annotations.CacheResult;
 import com.ciaranwood.tapestry.cache.services.annotations.WriteThrough;
 
-public class StringStoreDao implements StringDao {
+public class AlternateCacheKeyIndexImpl implements AlternateCacheKeyIndex {
 
-    private final StringStore store;
+    private final IntegerStore store;
 
-    public StringStoreDao(StringStore store) {
+    public AlternateCacheKeyIndexImpl(IntegerStore store) {
         this.store = store;
     }
 
     @CacheResult
-    public String get(@CacheKey Integer key) {
+    public Integer get(@CacheKey Integer key) {
         return store.get(key);
     }
 
     @WriteThrough
-    public void put(@CacheKey Integer key, String data) {
-        store.put(key, data);
+    public void put(Integer value, @CacheKey Integer key) {
+        store.put(key, value);
     }
 }

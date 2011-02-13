@@ -14,11 +14,13 @@ public class CacheMethodAdvice implements MethodAdvice {
     private final Ehcache cache;
     private final Logger log;
     private final int cacheKeyParameterIndex;
+    private final String methodKey;
 
-    public CacheMethodAdvice(String cacheName, int cacheKeyParameterIndex, CacheFactory cacheFactory, Logger log) {
-        this.cache = cacheFactory.getCache(cacheName);
+    public CacheMethodAdvice(Ehcache cache, int cacheKeyParameterIndex, String methodKey, Logger log) {
+        this.cache = cache;
         this.log = log;
         this.cacheKeyParameterIndex = cacheKeyParameterIndex;
+        this.methodKey = methodKey;
     }
 
     public void advise(Invocation invocation) {
@@ -37,12 +39,11 @@ public class CacheMethodAdvice implements MethodAdvice {
     }
 
     private CacheLocator getKeyForInvocation(Invocation invocation) {
-        String methodName = invocation.getMethodName();
         if(cacheKeyParameterIndex == -1) {
-            return new CacheLocator(methodName);
+            return new CacheLocator(methodKey);
         } else {
             Object key = invocation.getParameter(cacheKeyParameterIndex);
-            return new CacheLocator(methodName, key);
+            return new CacheLocator(methodKey, key);
         }
     }
 

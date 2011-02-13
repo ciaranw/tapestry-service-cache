@@ -2,8 +2,8 @@ package com.ciaranwood.tapestry.cache.services;
 
 public interface StringDao {
 
-    String get(Integer id);
+    String get(Integer key);
 
-    void put(Integer id, String data);
+    void put(Integer key, String data);
 
 }

@@ -10,7 +10,6 @@ import org.apache.tapestry5.ioc.ServiceBinder;
 import org.apache.tapestry5.ioc.ServiceResources;
 import org.apache.tapestry5.ioc.annotations.Match;
 import org.apache.tapestry5.ioc.annotations.Order;
-import org.slf4j.Logger;
 
 public final class ServiceCacheModule {
 
@@ -22,9 +21,8 @@ public final class ServiceCacheModule {
 
     @Match("*")
     @Order("after:*")
-    public static <T> T decorateForCaching(Class<T> serviceInterface, T delegate,
-                                           CacheMethodDecorator decorator, ServiceResources resources) {
-        return decorator.build(serviceInterface, delegate, resources);
+    public static <T> T decorateForCaching(T delegate, CacheMethodDecorator decorator, ServiceResources resources) {
+        return decorator.build(delegate, resources);
     }
 
     public static void contributeFactoryDefaults(MappedConfiguration<String, String> configuration) {
@@ -32,12 +30,4 @@ public final class ServiceCacheModule {
         configuration.add(ServiceCacheConstants.EHCACHE_CONFIGURATION_FILE, "/META-INF/ehcache-default.xml");
     }
 
-    public static void contributeRegistryStartup(OrderedConfiguration<Runnable> config,
-                                                 final CacheWriterClassFactory classFactory) {
-        config.add("cacheWriter", new Runnable() {
-            public void run() {
-                CacheWriterClassFactoryLocator.setClassFactory(classFactory);
-            }
-        });
-    }
 }

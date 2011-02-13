@@ -1,5 +1,7 @@
 <ehcache xsi:noNamespaceSchemaLocation="ehcache.xsd" updateCheck="true" monitoring="autodetect">
 
+    <terracottaConfig url="localhost:9510" />
+
     <!-- default cache lasts 10 mins -->
     <defaultCache
             maxElementsInMemory="10000"
@@ -12,5 +14,7 @@
             diskPersistent="false"
             diskExpiryThreadIntervalSeconds="0"
             memoryStoreEvictionPolicy="LRU"
-            />
+            >
+        <terracotta />
+    </defaultCache>
 </ehcache>
