@@ -1,22 +1,25 @@
 package com.ciaranwood.tapestry.cache.services;
 
 import com.ciaranwood.tapestry.cache.services.advice.CacheMethodDecorator;
-import com.ciaranwood.tapestry.cache.services.advice.CacheMethodDecoratorImpl;
 import com.ciaranwood.tapestry.cache.services.impl.BlockingCacheFactory;
 import com.ciaranwood.tapestry.cache.services.impl.CacheWriterClassFactoryImpl;
 import org.apache.tapestry5.ioc.MappedConfiguration;
-import org.apache.tapestry5.ioc.OrderedConfiguration;
 import org.apache.tapestry5.ioc.ServiceBinder;
 import org.apache.tapestry5.ioc.ServiceResources;
 import org.apache.tapestry5.ioc.annotations.Match;
-import org.apache.tapestry5.ioc.annotations.Order;
+import org.apache.tapestry5.ioc.annotations.PreventServiceDecoration;
 
+@PreventServiceDecoration
 public final class ServiceCacheModule {
 
     public static void bind(ServiceBinder binder) {
         binder.bind(CacheFactory.class, BlockingCacheFactory.class);
-        binder.bind(CacheMethodDecorator.class, CacheMethodDecoratorImpl.class);
         binder.bind(CacheWriterClassFactory.class, CacheWriterClassFactoryImpl.class);
+    }
+
+    public static CacheMethodDecorator buildCacheMethodDecorator(@Builtin AspectDecorator decorator,
+                                                                 @Local CacheFactory cacheFactory) {
+        return new CacheMethodDecoratorImpl(decorator, cacheFactory);
     }
 
     @Match("*")
