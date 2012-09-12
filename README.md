@@ -1,16 +1,18 @@
+# Tapestry Service Cache
+
 Tapestry Service Cache is an addon library for Tapestry 5 that allows you to add simple, annotation based caching to
 your project. Due to the modular, plug and play nature of Tapestry 5, you can just add this library as a dependency
 and add some annotations to your service classes to make your services cachable!
 
 The easiest way to use this library is to use maven. Add this to your pom:
 
-`
+```
 <dependency>
     <groupId>com.ciaranwood</groupId>
     <artifactId>tapestry-service-cache</artifactId>
     <version>3.0</version>
 </dependency>
-`
+```
 
 Version 1.0 is compatible with Tapestry 5.1, version 2.0.1 is compatible with Tapestry 5.2 and version 3.0 is compatible with Tapestry 5.3.
 
