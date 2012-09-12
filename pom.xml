@@ -45,7 +45,7 @@
         <dependency>
             <groupId>org.apache.tapestry</groupId>
             <artifactId>tapestry-ioc</artifactId>
-            <version>5.2.4</version>
+            <version>5.3.5</version>
         </dependency>
         <dependency>
             <groupId>net.sf.ehcache</groupId>
@@ -61,7 +61,7 @@
         <dependency>
             <groupId>org.apache.tapestry</groupId>
             <artifactId>tapestry-core</artifactId>
-            <version>5.2.4</version>
+            <version>5.3.5</version>
             <scope>test</scope>
         </dependency>
         <dependency>
