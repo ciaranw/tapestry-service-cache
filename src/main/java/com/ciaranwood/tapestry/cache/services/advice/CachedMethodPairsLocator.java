@@ -2,6 +2,8 @@ package com.ciaranwood.tapestry.cache.services.advice;
 
 import com.ciaranwood.tapestry.cache.services.annotations.CacheResult;
 import com.ciaranwood.tapestry.cache.services.annotations.WriteThrough;
+import org.apache.tapestry5.ioc.AnnotationProvider;
+import org.apache.tapestry5.ioc.ServiceResources;
 
 import java.lang.reflect.Method;
 import java.util.HashMap;
@@ -12,14 +14,15 @@ public class CachedMethodPairsLocator implements Iterable<CachedMethodPair> {
 
     private final Map<String, CachedMethodPair> methodKeyToMethodPair = new HashMap<String, CachedMethodPair>();
 
-    public CachedMethodPairsLocator(Class<?> classToAdvise) {
-        for(Method method : classToAdvise.getDeclaredMethods()) {
-            CacheResult cacheResult = method.getAnnotation(CacheResult.class);
+    public CachedMethodPairsLocator(Class<?> serviceInterface, ServiceResources resources) {
+        for(Method method : serviceInterface.getDeclaredMethods()) {
+            AnnotationProvider provider = resources.getMethodAnnotationProvider(method.getName(), method.getParameterTypes());
+            CacheResult cacheResult = provider.getAnnotation(CacheResult.class);
             if(cacheResult != null) {
                 addReadMethod(method, cacheResult);
             }
 
-            WriteThrough writeThrough = method.getAnnotation(WriteThrough.class);
+            WriteThrough writeThrough = provider.getAnnotation(WriteThrough.class);
             if(writeThrough != null) {
                 addWriteMethod(method, writeThrough);
             }
@@ -30,7 +33,7 @@ public class CachedMethodPairsLocator implements Iterable<CachedMethodPair> {
         String methodKey = getMethodKeyForRead(read, annotation);
 
         CachedMethodPair methodPair = getMethodPair(methodKey);
-        methodPair.setRead(read);
+        methodPair.setRead(read, annotation);
     }
 
     private CachedMethodPair getMethodPair(String methodKey) {
@@ -56,7 +59,7 @@ public class CachedMethodPairsLocator implements Iterable<CachedMethodPair> {
         String methodKey = getMethodKeyForWrite(write, annotation);
 
         CachedMethodPair methodPair = getMethodPair(methodKey);
-        methodPair.setWrite(write);
+        methodPair.setWrite(write, annotation);
     }
 
     private String getMethodKeyForWrite(Method write, WriteThrough annotation) {

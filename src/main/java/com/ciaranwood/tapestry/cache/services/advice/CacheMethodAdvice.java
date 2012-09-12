@@ -1,12 +1,10 @@
 package com.ciaranwood.tapestry.cache.services.advice;
 
-import com.ciaranwood.tapestry.cache.services.CacheFactory;
 import com.ciaranwood.tapestry.cache.services.CacheLocator;
-import net.sf.ehcache.Cache;
 import net.sf.ehcache.Ehcache;
 import net.sf.ehcache.Element;
-import org.apache.tapestry5.ioc.Invocation;
-import org.apache.tapestry5.ioc.MethodAdvice;
+import org.apache.tapestry5.plastic.MethodAdvice;
+import org.apache.tapestry5.plastic.MethodInvocation;
 import org.slf4j.Logger;
 
 public class CacheMethodAdvice implements MethodAdvice {
@@ -23,22 +21,22 @@ public class CacheMethodAdvice implements MethodAdvice {
         this.methodKey = methodKey;
     }
 
-    public void advise(Invocation invocation) {
+    public void advise(MethodInvocation invocation) {
         CacheLocator key = getKeyForInvocation(invocation);
         Element cached = cache.get(key);
         if(cached == null) {
             log.debug("cache miss for {} using cache {}", key, cache.getName());
             invocation.proceed();
-            Object result = invocation.getResult();
+            Object result = invocation.getReturnValue();
             cache.put(new Element(key, result));
             log.debug("cached result of {} using cache {}", key, cache.getName());
         } else {
-            invocation.overrideResult(cached.getValue());
+            invocation.setReturnValue(cached.getValue());
             log.debug("cache hit for {} using cache {}", key, cache.getName());
         }
     }
 
-    private CacheLocator getKeyForInvocation(Invocation invocation) {
+    private CacheLocator getKeyForInvocation(MethodInvocation invocation) {
         if(cacheKeyParameterIndex == -1) {
             return new CacheLocator(methodKey);
         } else {

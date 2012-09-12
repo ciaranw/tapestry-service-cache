@@ -1,13 +1,18 @@
 package com.ciaranwood.tapestry.cache.services;
 
 import com.ciaranwood.tapestry.cache.services.advice.CacheMethodDecorator;
+import com.ciaranwood.tapestry.cache.services.advice.CacheMethodDecoratorImpl;
 import com.ciaranwood.tapestry.cache.services.impl.BlockingCacheFactory;
 import com.ciaranwood.tapestry.cache.services.impl.CacheWriterClassFactoryImpl;
 import org.apache.tapestry5.ioc.MappedConfiguration;
 import org.apache.tapestry5.ioc.ServiceBinder;
 import org.apache.tapestry5.ioc.ServiceResources;
+import org.apache.tapestry5.ioc.annotations.Local;
 import org.apache.tapestry5.ioc.annotations.Match;
+import org.apache.tapestry5.ioc.annotations.Order;
 import org.apache.tapestry5.ioc.annotations.PreventServiceDecoration;
+import org.apache.tapestry5.ioc.services.AspectDecorator;
+import org.apache.tapestry5.ioc.services.Builtin;
 
 @PreventServiceDecoration
 public final class ServiceCacheModule {
@@ -18,13 +23,15 @@ public final class ServiceCacheModule {
     }
 
     public static CacheMethodDecorator buildCacheMethodDecorator(@Builtin AspectDecorator decorator,
-                                                                 @Local CacheFactory cacheFactory) {
-        return new CacheMethodDecoratorImpl(decorator, cacheFactory);
+                                                                 @Local CacheFactory cacheFactory,
+                                                                 @Local CacheWriterClassFactory classFactory) {
+        return new CacheMethodDecoratorImpl(decorator, cacheFactory, classFactory);
     }
 
     @Match("*")
     @Order("after:*")
-    public static <T> T decorateForCaching(T delegate, CacheMethodDecorator decorator, ServiceResources resources) {
+    public static <T> T decorateForCaching(T delegate, ServiceResources resources) {
+        CacheMethodDecorator decorator = resources.getService(CacheMethodDecorator.class);
         return decorator.build(delegate, resources);
     }
 

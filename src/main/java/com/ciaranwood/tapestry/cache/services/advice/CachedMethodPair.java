@@ -8,27 +8,31 @@ import java.lang.reflect.Method;
 public class CachedMethodPair {
 
     private final String methodKey;
-    private Method read;
-    private Method write;
+    private CacheResult readAnnotation;
+    private Method readMethod;
+    private WriteThrough writeAnnotation;
+    private Method writeMethod;
 
     public CachedMethodPair(String methodKey) {
         this.methodKey = methodKey;
     }
 
-    public Method getRead() {
-        return read;
+    public Method getReadMethod() {
+        return readMethod;
     }
 
-    public Method getWrite() {
-        return write;
+    public void setRead(Method readMethod, CacheResult readAnnotation) {
+        this.readMethod = readMethod;
+        this.readAnnotation = readAnnotation;
     }
 
-    public void setRead(Method read) {
-        this.read = read;
+    public Method getWriteMethod() {
+        return writeMethod;
     }
 
-    public void setWrite(Method write) {
-        this.write = write;
+    public void setWrite(Method writeMethod, WriteThrough writeAnnotation) {
+        this.writeMethod = writeMethod;
+        this.writeAnnotation = writeAnnotation;
     }
 
     public String getMethodKey() {
@@ -36,16 +40,14 @@ public class CachedMethodPair {
     }
 
     public String getCacheName() {
-        if(read == null && write == null) {
+        if(readMethod == null && writeMethod == null) {
             throw new RuntimeException("Cannot determine cache name: neither read or write methods found!");
         }
 
-        if(read == null) {
-            WriteThrough writeThrough = write.getAnnotation(WriteThrough.class);
-            return writeThrough.cacheName();
+        if(readAnnotation == null) {
+            return writeAnnotation.cacheName();
         } else {
-            CacheResult cacheResult = read.getAnnotation(CacheResult.class);
-            return cacheResult.cacheName();
+            return readAnnotation.cacheName();
         }
     }
 

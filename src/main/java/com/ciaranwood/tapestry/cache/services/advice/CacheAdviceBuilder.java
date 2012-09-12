@@ -5,8 +5,8 @@ import com.ciaranwood.tapestry.cache.services.annotations.CacheResult;
 import com.ciaranwood.tapestry.cache.services.impl.SwitchingCacheWriter;
 import net.sf.ehcache.Ehcache;
 import net.sf.ehcache.writer.CacheWriter;
-import org.apache.tapestry5.ioc.MethodAdvice;
 import org.apache.tapestry5.ioc.ServiceResources;
+import org.apache.tapestry5.plastic.MethodAdvice;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
@@ -52,23 +52,11 @@ public class CacheAdviceBuilder<T> {
     }
 
     private int getCacheKeyParameterIndex(Method method) {
-        Annotation[][] annotations = method.getParameterAnnotations();
-        for (int index = 0; index < annotations.length; index++) {
-            Annotation[] parameterAnnotations = annotations[index];
-            if (containsCacheKeyAnnotation(parameterAnnotations)) {
-                return index;
-            }
+        if(method.getParameterTypes().length > 0) {
+            return 0;
+        } else {
+            return -1;
         }
-
-        return -1;
     }
 
-    private boolean containsCacheKeyAnnotation(Annotation[] parameterAnnotations) {
-        for (Annotation parameterAnnotation : parameterAnnotations) {
-            if (parameterAnnotation.annotationType().equals(CacheKey.class)) {
-                return true;
-            }
-        }
-        return false;
-    }
 }

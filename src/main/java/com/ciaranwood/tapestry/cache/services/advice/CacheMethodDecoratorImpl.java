@@ -2,17 +2,13 @@ package com.ciaranwood.tapestry.cache.services.advice;
 
 import com.ciaranwood.tapestry.cache.services.CacheFactory;
 import com.ciaranwood.tapestry.cache.services.CacheWriterClassFactory;
-import com.ciaranwood.tapestry.cache.services.annotations.CacheKey;
-import com.ciaranwood.tapestry.cache.services.annotations.CacheResult;
 import com.ciaranwood.tapestry.cache.services.impl.SwitchingCacheWriter;
 import net.sf.ehcache.Ehcache;
 import net.sf.ehcache.writer.CacheWriter;
-import org.apache.tapestry5.ioc.MethodAdvice;
 import org.apache.tapestry5.ioc.ServiceResources;
 import org.apache.tapestry5.ioc.services.AspectDecorator;
 import org.apache.tapestry5.ioc.services.AspectInterceptorBuilder;
 
-import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 
 @SuppressWarnings("unchecked")
@@ -31,30 +27,25 @@ public class CacheMethodDecoratorImpl implements CacheMethodDecorator {
 
     public <T> T build(T delegate, ServiceResources resources) {
 
-        Class<?> implementation = resources.getImplementationClass();
         Class<T> serviceInterface = resources.getServiceInterface();
-
-        if(implementation == null) {
-            return delegate;
-        }
 
         AspectInterceptorBuilder<T> builder = decorator.createBuilder(serviceInterface, delegate,
                 String.format("<Cache interceptor for %s(%s)", resources.getServiceId(), serviceInterface.getName()));
 
-        for(CachedMethodPair methodPair : new CachedMethodPairsLocator(implementation)) {
+        for(CachedMethodPair methodPair : new CachedMethodPairsLocator(serviceInterface, resources)) {
 
             Ehcache cache = getCache(methodPair.getCacheName(), resources.getServiceId());
             CacheAdviceBuilder adviceBuilder = new CacheAdviceBuilder<T>(delegate, resources, cache);
             String methodKey = methodPair.getMethodKey();
 
-            Method read = methodPair.getRead();
+            Method read = methodPair.getReadMethod();
 
             if(read != null) {
                 Method method = getMethodToAdvise(serviceInterface, read);
                 builder.adviseMethod(method, adviceBuilder.buildReadMethodAdvice(methodKey, read));
             }
 
-            Method write = methodPair.getWrite();
+            Method write = methodPair.getWriteMethod();
             
             if(write != null) {
                 Method method = getMethodToAdvise(serviceInterface, write);

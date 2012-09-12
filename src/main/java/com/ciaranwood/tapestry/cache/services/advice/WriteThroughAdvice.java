@@ -1,11 +1,10 @@
 package com.ciaranwood.tapestry.cache.services.advice;
 
-import com.ciaranwood.tapestry.cache.services.CacheFactory;
 import com.ciaranwood.tapestry.cache.services.CacheLocator;
 import net.sf.ehcache.Ehcache;
 import net.sf.ehcache.Element;
-import org.apache.tapestry5.ioc.Invocation;
-import org.apache.tapestry5.ioc.MethodAdvice;
+import org.apache.tapestry5.plastic.MethodAdvice;
+import org.apache.tapestry5.plastic.MethodInvocation;
 import org.slf4j.Logger;
 
 public class WriteThroughAdvice implements MethodAdvice {
@@ -24,7 +23,7 @@ public class WriteThroughAdvice implements MethodAdvice {
         this.methodKey = methodKey;
     }
 
-    public void advise(Invocation invocation) {
+    public void advise(MethodInvocation invocation) {
         Object key = invocation.getParameter(cacheKeyParameterIndex);
         Object data = invocation.getParameter(dataParameterIndex);
 
