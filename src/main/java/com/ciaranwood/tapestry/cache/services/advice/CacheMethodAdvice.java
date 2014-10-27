@@ -26,9 +26,17 @@ public class CacheMethodAdvice implements MethodAdvice {
         Element cached = cache.get(key);
         if(cached == null) {
             log.debug("cache miss for {} using cache {}", key, cache.getName());
-            invocation.proceed();
-            Object result = invocation.getReturnValue();
-            cache.put(new Element(key, result));
+            try
+			{
+				invocation.proceed();
+				Object result = invocation.getReturnValue();
+				cache.put(new Element(key, result));
+			}
+			catch (Throwable throwable)
+			{
+				cache.put(new Element(key, null));
+				throw throwable;
+			}
             log.debug("cached result of {} using cache {}", key, cache.getName());
         } else {
             invocation.setReturnValue(cached.getValue());
